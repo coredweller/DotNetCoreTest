@@ -49,9 +49,11 @@ namespace MediatrTest
                 CallbackPath = "/Home/Index"
             });
 
+            //services.AddTransient<IMe>
+
             services.AddMvc(config =>
             {
-                config.Filters.Add(new AuthenticationActionFilter());
+                config.Filters.Add<AuthenticationActionFilter>();
             })
             .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
