@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Data;
+using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Collections.Generic;
@@ -9,7 +11,15 @@ namespace MediatrTest.Filters
 {
     public class AuthenticationActionFilter : IAsyncActionFilter
     {
-        string USERNAME_TYPE_CLAIM = "preferred_username";
+        const string USERNAME_TYPE_CLAIM = "preferred_username";
+        const string NAME_CLAIM = "name";
+        private readonly IMediator _mediator;
+
+        public AuthenticationActionFilter(IMediator mediator)
+        {
+            this._mediator = mediator;
+        }
+
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             // execute any code before the action executes
@@ -17,13 +27,28 @@ namespace MediatrTest.Filters
 
             if(context.HttpContext.User.HasClaim(x => x.Type == USERNAME_TYPE_CLAIM))
             {
-                var username = context.HttpContext.User.Claims.FirstOrDefault(x => x.Type == USERNAME_TYPE_CLAIM);
-                //TODO: CHECK DATABASE to see if it exists, if it doesn't add it so that when they do perform something it will be there to link to
+                var userModel = new User();
+
+                var usernameClaim = context.HttpContext.User.Claims.FirstOrDefault(x => x.Type == USERNAME_TYPE_CLAIM);
+                userModel.Email = usernameClaim?.Value;
+
+                if(context.HttpContext.User.HasClaim(x => x.Type == NAME_CLAIM))
+                {
+                    var nameClaim = context.HttpContext.User.Claims.FirstOrDefault(x => x.Type == NAME_CLAIM);
+                    userModel.Name = nameClaim?.Value;
+                }
+
+                var updatedUserModel = await _mediator.Send(userModel);
+
+                if (updatedUserModel.Id > 0)
+                {
+                    //action execution (only allow in this case if they have an email claim associated with the account)
+                    var result = await next();
+                    // execute any code after the action executes
+                }
             }
 
-            //action execution
-            var result = await next();
-            // execute any code after the action executes
+
         }
     }
 }
