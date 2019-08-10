@@ -39,15 +39,11 @@ namespace MediatrTest.Filters
                 }
 
                 var updatedUserModel = await _mediator.Send(userModel);
-
-                if (updatedUserModel.Id > 0)
-                {
-                    //action execution (only allow in this case if they have an email claim associated with the account)
-                    var result = await next();
-                    // execute any code after the action executes
-                }
             }
 
+            //action execution
+            var result = await next();
+            // execute any code after the action executes
 
         }
     }
