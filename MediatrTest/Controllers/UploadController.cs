@@ -3,14 +3,23 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using MediatrTest.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace MediatrTest.Controllers
 {
     [Route("[controller]")]
     public class UploadController : Controller
     {
+        private readonly ILogger<UploadController> _logger;
+
+        public UploadController(ILogger<UploadController> logger)
+        {
+            this._logger = logger;
+        }
+
         //TODO: never go the UI component to work for uploading files
         [HttpGet]
         public IActionResult Index()
@@ -22,45 +31,15 @@ namespace MediatrTest.Controllers
         [Route("uploadfile")]
         public async Task UploadFile(IFormFile file)
         {
-            throw new Exception("FUCK!!!");
             try
             {
-                bool isCopied = false;
-                //1 check if the file length is greater than 0 bytes 
-                if (file.Length > 0)
-                {
-                    string fileName = file.FileName;
-                    //2 Get the extension of the file
-                    string extension = Path.GetExtension(fileName);
-                    //3 check the file extension as png
-                    if (extension == ".png" || extension == ".jpg")
-                    {
-                        //4 set the path where file will be copied
-                        string filePath = Path.GetFullPath(
-                            Path.Combine(Directory.GetCurrentDirectory(),
-                                                        "UploadedFiles"));
-                        //5 copy the file to the path
-                        using (var fileStream = new FileStream(
-                            Path.Combine(filePath, fileName),
-                                           FileMode.Create))
-                        {
-                            await file.CopyToAsync(fileStream);
-                            isCopied = true;
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception("File must be either .png or .JPG");
-                    }
-                }
+                var uploadFileModel = await AmazonS3Helper.UploadObject(file);
             }
             catch (Exception ex)
             {
-                //Log here maybe
+                _logger.LogError(ex, $"Exception uploading file with name: {file.Name}");
                 throw ex;
             }
-
-            //return null;
         }
     }
 }

@@ -73,7 +73,12 @@ namespace MediatrTest
             app.ConfigureExceptionHandler(_logger);
             app.UseAuthentication();
             app.UseHttpsRedirection();
-            app.UseMvc();
+            app.UseMvc(routes =>
+            {
+                routes.MapRoute(
+                name: "default",
+                template: "{controller=Upload}/{action=Index}/{id?}");
+            });
         }
     }
 }
